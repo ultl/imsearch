@@ -106,7 +106,7 @@ class Qwen3VLForEmbedding(Qwen3VLPreTrainedModel):
 class ImageEmbedder:
     """Loads Qwen3-VL-Embedding and produces L2-normalised image embeddings."""
 
-    def __init__(self, model_name: str = "Qwen/Qwen3-VL-Embedding-8B"):
+    def __init__(self, model_name: str = "Qwen/Qwen3-VL-Embedding-2B"):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dtype = torch.float16 if device.type == "cuda" else torch.float32
 
