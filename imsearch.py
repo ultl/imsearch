@@ -163,15 +163,35 @@ class ImageEmbedder:
         text = self.processor.apply_chat_template(
             messages, add_generation_prompt=True, tokenize=False
         )
-        image_inputs, video_inputs = process_vision_info(messages)
+
+        # Qwen3-VL uses patch_size=16 (not the default 14 for Qwen2.5-VL).
+        # process_vision_info resizes images to dims divisible by
+        # patch_size * spatial_merge_size (16*2=32), so we must pass
+        # do_resize=False to the processor to avoid a second resize that
+        # would break the patch grid alignment.
+        image_inputs, video_inputs, video_kwargs = process_vision_info(
+            messages,
+            image_patch_size=16,
+            return_video_metadata=True,
+            return_video_kwargs=True,
+        )
+
+        # Unpack video metadata if present (image-only → typically None).
+        if video_inputs is not None:
+            videos = [v[0] for v in video_inputs]
+            video_metadata = [v[1] for v in video_inputs]
+        else:
+            videos, video_metadata = None, None
 
         inputs = self.processor(
             text=[text],
             images=image_inputs,
-            videos=video_inputs,
+            videos=videos,
+            video_metadata=video_metadata,
             padding=True,
             do_resize=False,
             return_tensors="pt",
+            **video_kwargs,
         )
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
